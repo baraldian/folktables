@@ -117,6 +117,9 @@ def load_acs(root_dir, states=None, year=2018, horizon='1-Year',
         df = pd.read_csv(file_name, dtype=dtypes).replace(' ','')
         if serial_filter_list is not None:
             df = df[df['SERIALNO'].isin(serial_filter_list)]
+        if serial_filter_list is None and density < 1:
+            sample_mask = [random.uniform(0, 1) < density for _ in range(len(df))]
+            df = df[sample_mask]
         df_list.append(df)
     all_df = pd.concat(df_list)
     return all_df
@@ -144,6 +147,7 @@ def load_definitions(root_dir, year=2018, horizon='1-Year', download=False):
     year_string = year if horizon == '1-Year' else f'{year - 4}-{year}'
     url = f'https://www2.census.gov/programs-surveys/acs/tech_docs/pums/data_dict/PUMS_Data_Dictionary_{year_string}.csv'
 
+    os.makedirs(base_datadir, exist_ok=True)
     response = requests.get(url)
     with open(file_path, 'wb') as handle:
         handle.write(response.content)
